@@ -18,7 +18,7 @@ cd(dirname);
 temp=regexp(dirname,'\','split');
 filename= strcat(temp{end},'.dat');
 
-dirData = dir(fullfile(dirname, '100_CH*.continuous'));
+dirData = dir(fullfile(dirname, '100_CH*.continuous')); %the 100 file id means that this is the mostly unfiltered data recorded from the rhythm fpga board.
 dirIndex = [dirData.isdir];
 fileList = {dirData(~dirIndex).name}';
 
