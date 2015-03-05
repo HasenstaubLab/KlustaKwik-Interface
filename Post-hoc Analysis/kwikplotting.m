@@ -24,9 +24,14 @@ contplot=zeros(length(YVals),length(XVals));
 	
 	xlabel(XYDim.XDim);
 	ylabel(XYDim.YDim);
+	if ~isempty(blockno)
+		tl=sprintf('File: %s\\ block-%d\n Timing: %s, offset %2.3f sec, duration %2.3f sec\nCluster: %d\nColor: spikes per trial',filename,blockno,'Stim',offset,duration, clustername);
+	else
+		tl=sprintf('File: %s \n Timing: %s, offset %2.3f sec, duration %2.3f sec\nCluster: %d\nColor: spikes per trial',filename,'Stim',offset,duration, clustername);
+	end
 	
-	tl=sprintf('File: %s\\ block-%d\n Timing: %s, offset %2.3f sec, duration %2.3f sec\nCluster: %d\nColor: spikes per trial',filename,blockno,'Stim',offset,duration, clustername);
 	than=title(tl,'Fontsize',15);
+	set(than, 'interpreter','none') %removes tex interpretation rules
   	set(than,'HorizontalAlignment','center');
 
 cbar=colorbar();
