@@ -1,5 +1,5 @@
 function kwikimportOE
-%% Astra Bryant, March 4, 2015
+%% Astra Bryant, March 9, 2015
 
 %%%% This is a top level program!!!
 
@@ -8,7 +8,7 @@ function kwikimportOE
 
 %%Parameters
 %clear all;
-onlygoodmua=0; %Set to 1 to export only good/mua, without noise or unsorted clusters. Set to 0 to include all clusters.
+onlygoodmua=1; %Set to 1 to export only good/mua, without noise or unsorted clusters. Set to 0 to include all clusters.
 %sfq=30000; %sampling rate
 
 %% Selecting a file to analyze 
@@ -21,8 +21,8 @@ cd(pathname);
 
 %% Retrieivng spikes, clusters and waveforms from the kwik file
 
-spiketimes = h5read(filename, '/channel_groups/1/spikes/time_samples');
-whichcluster = h5read(filename, '/channel_groups/1/spikes/clusters/main');
+spiketimes = double(h5read(filename, '/channel_groups/0/spikes/time_samples'));
+whichcluster = double(h5read(filename, '/channel_groups/0/spikes/clusters/main'));
 
 
 %Get meta information about spike clusters. This group will have each
@@ -30,10 +30,10 @@ whichcluster = h5read(filename, '/channel_groups/1/spikes/clusters/main');
 %good, 3= unsorted. The cluster type information is found in
 %clustermeta.Groups.Attributes
 
-samplerate=h5readatt(filename, '/application_data/spikedetekt','sample_rate');
-channelno=h5readatt(filename, '/application_data/spikedetekt','nchannels');
+samplerate=double(h5readatt(filename, '/application_data/spikedetekt','sample_rate'));
+channelno=double(h5readatt(filename, '/application_data/spikedetekt','nchannels'));
 
-clustermeta= h5info(filename, '/channel_groups/1/clusters/main/');
+clustermeta= h5info(filename, '/channel_groups/0/clusters/main/');
 clusterno=size(clustermeta.Groups,1);
 
 for n=1:clusterno
@@ -48,11 +48,11 @@ for n=1:clusterno
 end
 clear temp
 
-waveforms=h5read(rawfilename,'/channel_groups/1/waveforms_filtered');
+waveforms=double(h5read(rawfilename,'/channel_groups/0/waveforms_filtered'));
 
 %Import masks
-temp=h5read(rawfilename,'/channel_groups/1/features_masks');
-masks=squeeze(temp(2,[1:3:channelno],:));
+temp=double(h5read(rawfilename,'/channel_groups/0/features_masks'));
+masks=squeeze(temp(2,[1:3:3*channelno],:));
 
   if onlygoodmua==1
       temp=find(extractmeta(:,2)>0 & extractmeta(:,2)<3);
@@ -87,16 +87,17 @@ masks=squeeze(temp(2,[1:3:channelno],:));
 for n=1:size(extractmeta,1)
     x=extractmeta(n,1);
     spikeindex=find(whichcluster==x);
-    [rowindex, colindex] = find(masks(:,spikeindex)>0);
-%     for y=1:length(rowindex)
-%         eval(['clustdata(' num2str(n) ').waves(y,:)=double(waveforms(rowindex(y),:,spikeindex(colindex(y))));']);
-%         eval(['clustdata(' num2str(n) ').wavestimes(y,1)=double(spiketimes(spikeindex(colindex(y),1)));']);
-%         
-%     end
-    eval(['clustdata(' num2str(n) ').times=double(spiketimes(spikeindex,1));']);
-%     for y=1:channelno
-%     eval(['clustdata(' num2str(n) ').avgwaves(:,y)=transpose(squeeze(mean(waveforms(y,:,spikeindex),3)));']);
-%     end
+
+	[rowindex, colindex] = find(masks(:,spikeindex)>0);
+     for y=1:length(rowindex)
+         eval(['clustdata(' num2str(n) ').waves(y,:)=double(waveforms(rowindex(y),:,spikeindex(colindex(y))));']);
+         %eval(['clustdata(' num2str(n) ').wavestimes(y,1)=double(spiketimes(spikeindex(colindex(y),1)));']);
+         
+     end
+    eval(['clustdata(' num2str(n) ').times=double(spiketimes(spikeindex,1));']); %this is not in real time but is relative to start of recording
+%      for y=1:channelno
+%      eval(['clustdata(' num2str(n) ').avgwaves(:,y)=transpose(squeeze(mean(waveforms(y,:,spikeindex),3)));']);
+%      end
     eval(['clustdata(' num2str(n) ').clustno=x;']);
     eval(['clustdata(' num2str(n) ').clustype=extractmeta(n,2);']);
 end
@@ -112,7 +113,7 @@ end
 %Run this code for each cluster, output a figure for each cluster.
 
 timingfile='100_ADC2.continuous';
-[Times, XVals, YVals, TriCounts, ClusterSpCounts, XYDim, offset, duration] = queryOE (clustdata, timingfile, clustno);
+[Times, XVals, YVals, TriCounts, ClusterSpCounts,ClusterWaveforms, XYDim, offset, duration] = queryOE (clustdata, timingfile, clustno);
 close all;
 
 
@@ -121,14 +122,16 @@ close all;
 % generated for each stimulus presentation, with the stimulus properties
 % determined by matching XVal and YVal vectors. 
 
-% Next, need to arrange this data so that a heat map can be generated from
-% the data. Should be able to use the code already written for Biz's
-% data...
+% Next, uses code adapted from TDT/Biz system to plot a waveplot.
 for x=1:clustno
-    kwikplotting(TriCounts,ClusterSpCounts(:,:,x),XVals,YVals, XYDim, goodmua(x), filename, pathname, offset, duration, '');
-    set(gcf,'tag','coarse actplot');
-    printmany(pathname,sprintf('%s block-%d cluster=%d coarse actplot',filename, '', goodmua(x,1)));
-close(gcf)
+    kwikHeatPlot(TriCounts,ClusterSpCounts(:,:,x),XVals,YVals, XYDim, goodmua(x), filename, pathname, offset, duration, '');
+	set(gcf,'tag','coarse actplot');
+	printmany(pathname,sprintf('%s block-%d cluster=%d coarse actplot',filename, '', goodmua(x,1)));
+	close(gcf)
+	kwikWavePlot(XYDim, TriCounts,{transpose(ClusterWaveforms{:,:,x})},XVals,YVals, goodmua(x), filename, pathname,'');
+	set(gcf,'tag','waveplot');
+    printmany(pathname,sprintf('%s block-%d cluster=%d waveplot',filename, '', goodmua(x,1)));
+	close(gcf)
 end
 
 end

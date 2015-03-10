@@ -1,4 +1,4 @@
-function kwikplotting(TriCounts,SpCounts,XVals,YVals, XYDim, clustername, filename, pathname, offset, duration, blockno)
+function kwikHeatPlot(TriCounts,SpCounts,XVals,YVals, XYDim, clustername, filename, pathname, offset, duration, blockno)
 
 %%some processing of the left and right boundaries of signifiant bins
 contplot=zeros(length(YVals),length(XVals));

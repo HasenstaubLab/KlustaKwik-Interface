@@ -1,5 +1,5 @@
 function kwikimportTDT
-%% Astra Bryant, Jan 14, 2015
+%% Astra Bryant, March 9, 2015
 %Important Note: This program assumes that stimulus timing information is
 %saved in a TDT tank file. If this is not the case, don't use this program.
 %Code that runs off of open-ephys hasn't been written yet.
@@ -142,9 +142,12 @@ close all;
 % the data. Should be able to use the code already written for Biz's
 % data...
 for x=1:clustno
-    kwikplotting(TriCounts,ClusterSpCounts(:,:,x),XVals,YVals, XYDim, goodmua(x), filename, pathname, offset, duration, blockno);
+    kwikHeatPlot(TriCounts,ClusterSpCounts(:,:,x),XVals,YVals, XYDim, goodmua(x), filename, pathname, offset, duration, blockno);
     set(gcf,'tag','coarse actplot');
     printmany(pathname,sprintf('%s block-%d cluster=%d coarse actplot',filename, blockno, goodmua(x,1)));
+	
+	%Could use kwikWavePlot to generate a wave plot. See kwikimportOE for
+	%relevant additions to the code to make. 
 close(gcf)
 end
 

@@ -157,6 +157,7 @@ if (isfield(info.header,'sampleRate'))
 	sfq = info.header.sampleRate;
     if ~ischar(info.header.sampleRate)
         stimsout = stimsout./info.header.sampleRate; % convert to seconds
+		stimsout = stimsout - timestamps(1)/info.header.sampleRate; % make relative to the start of the recording
     end
 end
 

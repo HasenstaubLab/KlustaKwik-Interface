@@ -1,4 +1,4 @@
-function [Times, XVals, YVals, TriCounts, ClusterSpCounts, XYDim, offset, duration] = queryOE (clustdata, timingfile, clustno)
+function [Times, XVals, YVals, TriCounts, ClusterSpCounts, ClusterWaveforms, XYDim, offset, duration] = queryOE (clustdata, timingfile, clustno)
 %% Astra Bryant, March 4, 2015
 %This function is called by kwikimportOE.m
 
@@ -21,8 +21,10 @@ load(zmqfilename)
 
 XYDim.YDim='Atte';
 XYDim.XDim='Freq';
-x_idx = strmatch('audio_freq',var_list,'exact');
-y_idx = strmatch('audio_atten',var_list,'exact');
+%x_idx = strmatch('audio_freq',var_list,'exact');
+%y_idx = strmatch('audio_atten',var_list,'exact');
+x_idx = strmatch('audio_dur',var_list,'exact');
+y_idx = strmatch('audio_dur',var_list,'exact');
 x_prms = stim_vals{x_idx};
 y_prms = stim_vals{y_idx};
 
@@ -36,6 +38,7 @@ xy = [x_prms' y_prms'];
 %Initialize
 TriCounts=zeros(numel(YVals),numel(XVals));
 SpCounts=zeros(numel(YVals),numel(XVals));
+Waveforms=cell(numel(YVals),numel(XVals));
  
 %For each time, which X and Y cell does it belong to?
 offset=0.00;
@@ -43,19 +46,16 @@ duration=0.05; %these are in seconds, so 50 ms
 
 for n=1:clustno
 	%Determine which spikes belong within the time windows specified in
-	temp=clustdata(n).times;
-	%temp=clustdata(n).times/sfq; %This line is necessary if .kwik timing
+	%temp=clustdata(n).times;
+	temp=clustdata(n).times/sfq; %This line is necessary if .kwik timing
 	%data is in another time base than the data in the .continuous file.
 	%Won't know until I can run them.
 	
 	for i=1:numel(Times(:,1))
 		startbin=Times(i,1)+offset; %these will set the duration of the response here. can also use the full duration, by setting endbin to Times(i,2)
 		endbin=startbin+duration;
-		%%THIS PART IS BROKEN - I HIGHLY SUSPECT THAT THE STIMULUS TIMES
-		%%ARE IN A DIFFERENT TIMEBASE THAN THE KLUSTAKWIK TIMING. NEED TO
-		%%COMPARE THE TIMING INFORMATION PULLED FROM THE CONTINUOUS DATA
-		%%FILES TO THE TIMING INFORMATION PULLED FROM THE .KWIK FILE. 
 		ENeuEvents = size(find(temp>startbin & temp<endbin),1);
+		ENeuInd    = find(temp>startbin & temp<endbin);
 		ENeuCount  = ENeuEvents;
 		
 		XVal       = xy(i,1);
@@ -68,8 +68,10 @@ for n=1:clustno
 		TriCounts(YInd,XInd)=TriCounts(YInd,XInd)+1;
         if(isfinite(ENeuCount) && ENeuCount>0)
             SpCounts(YInd,XInd)=SpCounts(YInd,XInd)+ENeuCount;
+			Waveforms{YInd,XInd}=vertcat(Waveforms{YInd, XInd},clustdata(n).waves(ENeuInd,:));
         end
 	end
 	eval(['ClusterSpCounts(:,:,' num2str(n) ')=SpCounts;']);
+	eval(['ClusterWaveforms(:,:,' num2str(n) ')=Waveforms;']);
 end   
 end

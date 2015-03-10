@@ -8,9 +8,11 @@ function OpenEphys2Dat
 %.continous files, b) rearrange the raw waveform so that time moves iteratively
 %through each channel. 
 
-% Note, this assumes there is a 16 channel probe.
+% Adjust parameter nchannelstosave in order to change how many channels will be saved.
 
 % Astra Bryant 2/20/15
+
+nchannelstosave=3; %currently saves only the first n channels. Could write more complex code that asks exactly which channels should be saved. 
 
 dirname = uigetdir('Z:\astra\OpenEphys sample data\', 'Select Data Directory');
 cd(dirname);
@@ -30,8 +32,8 @@ ADCIndex=[dirADC.isdir];
 ADCList={dirADC(~ADCIndex).name}';
 
 
-for i=1:size(fileList,1)
-	
+%for i=1:size(fileList,1)
+for i=1:nchannelstosave	
 	[data]=load_open_ephys_data(fileList{i});
 	compile(i,:)=double(data);
 	clear data
