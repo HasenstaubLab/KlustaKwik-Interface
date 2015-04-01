@@ -30,10 +30,11 @@ ADCIndex=[dirADC.isdir];
 ADCList={dirADC(~ADCIndex).name}';
 
 
-for i=1:size(fileList,1)
-	
+% for i=1:size(fileList,1)
+for i=1:6
 	[data]=load_open_ephys_data(fileList{i});
 	compile(i,:)=double(data);
+    disp(fileList{i}); 
 	clear data
 end
 
